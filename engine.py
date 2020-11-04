@@ -3,11 +3,11 @@
 
 
 class Game_state():
-
+	
     def __init__(self):
         """
             The chess board is an 8 X 8 dimensional array (Matrix of 8 rows and 8 columns )
-            i.e a list of lists. Each element of the Matrix is a string of two characters
+            i.e a list of lists. Each element of the Matrix is a string of two characters 
             representing the chess pieces in the order "type" + "colour"
 
             light pawn = pl
@@ -55,43 +55,44 @@ class Game_state():
 
         ## FIX
         if self.light_to_move: # if it's light's turn to move
+            
+            # if square is empty and in front of pawn and it is the pawn's first move
+            if (r == 6) and (self.board[r-2][c] == "  "):
+                moves.append(Move((r, c), (r-2, c), self.board)) # create a move object and append to list
+            
+            # if square is empty and in front of pawn
+            if (r-1 >= 0) and (self.board[r-1][c] == "  "):
+                moves.append(Move((r, c), (r-1, c), self.board)) # create a move object and append to list
+            
+            # if square on pawn's left diagonal has an opponent piece
+            if ((r-1 >= 0) and (c-1 >= 0)) and (self.board[r-1][c-1][1] == "d"):
+                moves.append(Move((r, c), (r-1, c-1), self.board)) # create a move object and append to list
+            
+            # if square on pawn's right diagonal has an opponent piece
+            if ((r-1 >= 0) and (c+1 < len(self.board))) and (self.board[r-1][c+1][1] == "d"):
+                moves.append(Move((r, c), (r-1, c+1), self.board)) # create a move object and append to list
 
-            for i in range(len(self.board)):
-                for j in range(len(self.board[i])):
-                    # if square is empty and in front of pawn and it is the pawn's first move
-                    if ((i == r-2) and (j == c) ) and (r == 6) and (self.board[i][j] == "  "):
-                        moves.append(Move((r, c), (i, j), self.board)) # create a move object and append to list
-
-                    # if square is empty and in front of pawn
-                    if ((i == r-1) and (j == c) ) and (self.board[i][j] == "  "):
-                        moves.append(Move((r, c), (i, j), self.board)) # create a move object and append to list
-
-                    # if square is diagonal to pawn and has an opponent piece
-                    if ((i == r-1) and (j == c+1 or j == c-1) and (self.board[i][j][1] == "d")):
-                        moves.append(Move((r, c), (i, j), self.board)) # create a move object and append to list
-
-
-
-        ##FIX
         else: # if it's dark's turn to move
-
-            for i in range(len(self.board)):
-                for j in range(len(self.board[i])):
-                    # if square is empty and in front of pawn and it is the pawn's first move
-                    if ((i == r+2) and (j == c) ) and (r == 1) and (self.board[i][j] == "  "):
-                        moves.append(Move((r, c), (i, j), self.board)) # create a move object and append to list
-
-                    # if square is empty and in front of pawn
-                    if ((i == r+1) and (j == c) ) and (self.board[i][j] == "  "):
-                        moves.append(Move((r, c), (i, j), self.board)) # create a move object and append to list
-
-                    # if square is diagonal to pawn and has an opponent piece
-                    if ((i == r+1) and (j == c+1 or j == c-1) and (self.board[i][j][1] == "l")):
-                        moves.append(Move((r, c), (i, j), self.board)) # create a move object and append to list
+            
+            # if square is empty and in front of pawn and it is the pawn's first move
+            if (r == 1) and (self.board[r+2][c] == "  "):
+                moves.append(Move((r, c), (r+2, c), self.board)) # create a move object and append to list
+            
+            # if square is empty and in front of pawn
+            if (r+1 < len(self.board)) and (self.board[r+1][c] == "  "):
+                moves.append(Move((r, c), (r+1, c), self.board)) # create a move object and append to list
+            
+            # if square on pawn's left diagonal has an opponent piece
+            if ((r+1 < len(self.board)) and (c-1 >= 0)) and (self.board[r+1][c-1][1] == "l"):
+                moves.append(Move((r, c), (r+1, c-1), self.board)) # create a move object and append to list
+            
+            # if square on pawn's right diagonal has an opponent piece
+            if ((r+1 < len(self.board)) and (c+1 < len(self.board))) and (self.board[r+1][c+1][1] == "l"):
+                moves.append(Move((r, c), (r+1, c+1), self.board)) # create a move object and append to list
 
 
     def get_bishop_moves(self, r, c, moves):
-
+        
         """
             calculates all possible bishop moves for a given colour (light or dark)
             and appends them to a list
@@ -138,18 +139,76 @@ class Game_state():
                     else:
                         break  # when off the board
 
-        pass
-
 
     def get_knight_moves(self, r, c, moves):
-        ##TODO
-        pass
+
+        """
+            calculates all possible knight moves for a given colour (light or dark)
+            and appends them to a list
+
+            input parameters:
+            r     --> starting row (int)
+            c     --> starting column (int)
+            moves --> posiible moves container (list)
+
+            return parameter(s):
+            None
+        """
+        #possible squares for knight move
+        squares = (
+            (r+2,c+1), (r+2,c-1), (r-2,c+1), (r-2,c-1),
+            (r+1,c+2), (r+1,c-2), (r-1,c+2), (r-1,c-2)
+        )
+
+        if self.light_to_move: # if it's light's turn to move
+            available_squares = (" ", "d") #squares the knight can move to
+
+            for square in squares:
+                i,j = square
+                if ( (0 <= i < len(self.board)) and (0 <= j < len(self.board))
+                    and (self.board[i][j][1] in available_squares) ):
+
+                    moves.append(Move((r, c), square, self.board)) # create a move object and append to list
+        
+
+        else: #if it's dark's turn to move
+            available_squares = (" ", "l") #squares the knight can move to
+
+            for square in squares:
+                i,j = square
+                if ( (0 <= i < len(self.board)) and (0 <= j < len(self.board))
+                    and (self.board[i][j][1] in available_squares) ):
+
+                    moves.append(Move((r, c), square, self.board)) # create a move object and append to list
 
 
     def get_king_moves(self, r, c, moves):
-        ##TODO
-        pass
+        """
+            calculates all possible king moves for a given colour (light or dark)
+            and appends them to a list
 
+            input parameters:
+            r     --> starting row (int)
+            c     --> starting column (int)
+            moves --> posiible moves container (list)
+
+            return parameter(s):
+            None
+        """
+
+        directions = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+        enemy_color = "d" if self.light_to_move else "l"
+
+        for d in directions:
+            end_row = r + d[0]
+            end_col = c + d[1]
+
+            if 0 <= end_row < 8 and 0<= end_col < 8:
+                destination = self.board[end_row][end_col]
+                if destination[1] == enemy_color or destination == "  ":
+                    moves.append(Move((r, c), (end_row, end_col), self.board))
+
+            
 
     def get_rook_moves(self, r, c, moves):
         """
