@@ -7,36 +7,39 @@ class Game_state():
     def __init__(self):
         """
             The chess board is an 8 X 8 dimensional array (Matrix of 8 rows and 8 columns )
-            i.e a list of lists. Each element of the Matrix is a string of two characters 
+            i.e a list of lists. Each element of the Matrix is a string of two characters
             representing the chess pieces in the order "type" + "colour"
 
-            light pawn = pl
-            dark pawn  = pd
+			light pawn = pl
+			dark pawn  = pd
 
-            light knight = nl
-            dark knight  = nd
-            e.t.c
+			light knight = nl
+			dark knight  = nd
+			e.t.c
 
-            empty board square = "  " ---> double empty space
+			empty board square = "  " ---> double empty space
 
-        """
+		"""
 
         self.board = [
 
-            ["rd", "nd", "bd", "qd", "kd", "bd", "nd", "rd"],
-            ["pd", "pd", "pd", "pd", "pd", "pd", "pd", "pd"],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["pl", "pl", "pl", "pl", "pl", "pl", "pl", "pl"],
-            ["rl", "nl", "bl", "ql", "kl", "bl", "nl", "rl"]]
+			["rd", "nd", "bd", "qd", "kd", "bd", "nd", "rd"],
+			["pd", "pd", "pd", "pd", "pd", "pd", "pd", "pd"],
+			["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+			["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+			["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+			["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+			["pl", "pl", "pl", "pl", "pl", "pl", "pl", "pl"],
+			["rl", "nl", "bl", "ql", "kl", "bl", "nl", "rl"]]
 
         self.light_to_move = True # True = light's turn to play; False = dark's turn to play
         self.move_log = []        # keeps a log of all moves made withing a game
         self.move_piece = {"p":self.get_pawn_moves, "r":self.get_rook_moves, \
                         "q":self.get_queen_moves, "k":self.get_king_moves, \
                         "b":self.get_bishop_moves, "n":self.get_knight_moves}
+        self.king_pos = {"kl":(7,4), "kd":(0,4)} # light king and Dark King starting row and column
+        self.check_mate = False # setting checkmate false
+        self.stale_mate = False #setting
 
 
     def get_pawn_moves(self, r, c, moves):
@@ -52,17 +55,17 @@ class Game_state():
             return parameter(s):
             None
         """
-
+        
         ## FIX
         if self.light_to_move: # if it's light's turn to move
-            
-            # if square is empty and in front of pawn and it is the pawn's first move
-            if (r == 6) and (self.board[r-2][c] == "  "):
-                moves.append(Move((r, c), (r-2, c), self.board)) # create a move object and append to list
             
             # if square is empty and in front of pawn
             if (r-1 >= 0) and (self.board[r-1][c] == "  "):
                 moves.append(Move((r, c), (r-1, c), self.board)) # create a move object and append to list
+                # if square two steps in front of pawn is empty and it is the pawn's first move
+                if (r == 6) and (self.board[r-2][c] == "  "):
+                    moves.append(Move((r, c), (r-2, c), self.board)) # create a move object and append to list
+            
             
             # if square on pawn's left diagonal has an opponent piece
             if ((r-1 >= 0) and (c-1 >= 0)) and (self.board[r-1][c-1][1] == "d"):
@@ -72,15 +75,32 @@ class Game_state():
             if ((r-1 >= 0) and (c+1 < len(self.board))) and (self.board[r-1][c+1][1] == "d"):
                 moves.append(Move((r, c), (r-1, c+1), self.board)) # create a move object and append to list
 
+            # en-passant move
+            if len(self.move_log) != 0: # if move log is not empty
+                if self.move_log[-1].piece_moved[0] == 'p': # if last piece moved is a pawn
+                    # if the pawn made a double move
+                    if (self.move_log[-1].start_row == 1) and (self.move_log[-1].end_row == 3):
+                        # if the pawn made a double move on this piece's left side 
+                        if (self.move_log[-1].end_row, self.move_log[-1].end_col) == (r,c-1):
+                            # create a move object and append to list
+                            moves.append(Move((r, c), (r-1, c-1), self.board, move_type="en_passant"))
+                        # if the pawn made a double move on this piece's right side 
+                        elif (self.move_log[-1].end_row, self.move_log[-1].end_col) == (r,c+1):
+                            # create a move object and append to list
+                            moves.append(Move((r, c), (r-1, c+1), self.board, move_type="en_passant"))
+                        # if the pawn did not make a move on this pawn's side
+                        else:
+                            pass
+			
+
         else: # if it's dark's turn to move
-            
-            # if square is empty and in front of pawn and it is the pawn's first move
-            if (r == 1) and (self.board[r+2][c] == "  "):
-                moves.append(Move((r, c), (r+2, c), self.board)) # create a move object and append to list
             
             # if square is empty and in front of pawn
             if (r+1 < len(self.board)) and (self.board[r+1][c] == "  "):
                 moves.append(Move((r, c), (r+1, c), self.board)) # create a move object and append to list
+                # if square two steps in front of pawn is empty and it is the pawn's first move
+                if (r == 1) and (self.board[r+2][c] == "  "):
+                    moves.append(Move((r, c), (r+2, c), self.board)) # create a move object and append to list
             
             # if square on pawn's left diagonal has an opponent piece
             if ((r+1 < len(self.board)) and (c-1 >= 0)) and (self.board[r+1][c-1][1] == "l"):
@@ -89,6 +109,23 @@ class Game_state():
             # if square on pawn's right diagonal has an opponent piece
             if ((r+1 < len(self.board)) and (c+1 < len(self.board))) and (self.board[r+1][c+1][1] == "l"):
                 moves.append(Move((r, c), (r+1, c+1), self.board)) # create a move object and append to list
+            
+            # en-passant move
+            if len(self.move_log) != 0: # if move log is not empty
+                if self.move_log[-1].piece_moved[0] == 'p': # if last piece moved is a pawn
+                    # if the pawn made a double move
+                    if (self.move_log[-1].start_row == 6) and (self.move_log[-1].end_row == 4):
+                        # if the pawn made a double move on this piece's left side 
+                        if (self.move_log[-1].end_row, self.move_log[-1].end_col) == (r,c+1):
+                            # create a move object and append to list
+                            moves.append(Move((r, c), (r+1, c+1), self.board, move_type="en_passant"))
+                        # if the pawn made a double move on this piece's right side 
+                        elif (self.move_log[-1].end_row, self.move_log[-1].end_col) == (r,c-1):
+                            # create a move object and append to list
+                            moves.append(Move((r, c), (r+1, c-1), self.board, move_type="en_passant"))
+                        # if the pawn did not make a move on this pawn's side
+                        else:
+                            pass
 
 
     def get_bishop_moves(self, r, c, moves):
@@ -308,8 +345,23 @@ class Game_state():
         """
             moves pieces on the board
         """
+        if move.move_type == "en_passant": # if move is an en-passant move
+            if self.light_to_move: # if it's light's turn to move
+                # capturing piece
+                move.piece_captured = self.board[move.end_row + 1][move.end_col]
+                self.board[move.end_row + 1][move.end_col] = "  "
+            else: # if it's dark's turn to move
+                # capturing piece
+                move.piece_captured = self.board[move.end_row - 1][move.end_col]
+                self.board[move.end_row - 1][move.end_col] = "  "
+        
         self.board[move.start_row][move.start_col] = "  "
         self.board[move.end_row][move.end_col] = move.piece_moved
+        
+        #Updating king position
+        if move.piece_moved[0] == "k": # king piece moved
+            self.king_pos[move.piece_moved] = (move.end_row, move.end_col) # update tuple containing postion
+
         self.move_log.append(move) # log move
         self.light_to_move = not self.light_to_move # next player to move
 
@@ -321,17 +373,68 @@ class Game_state():
         if self.move_log:
             last_move = self.move_log.pop()
             self.board[last_move.start_row][last_move.start_col] = last_move.piece_moved
-            self.board[last_move.end_row][last_move.end_col] = last_move.piece_captured
+            
+            if last_move.move_type == "en_passant": # if the last move was an en-passant move
+                
+                if not self.light_to_move: # if the last move was light's move
+                    # undo piece capture
+                    self.board[last_move.end_row + 1][last_move.end_col] = last_move.piece_captured
+                else: # if the last move was dark's move
+                    # undo piece capture
+                    self.board[last_move.end_row - 1][last_move.end_col] = last_move.piece_captured
+
+                # remove piece from occupied square
+                self.board[last_move.end_row][last_move.end_col] = "  "
+
+            else: # if the last move was not an en-passant move
+                # undo piece capture
+                self.board[last_move.end_row][last_move.end_col] = last_move.piece_captured
+                
+                #Undoing kings movement
+                if last_move.piece_moved[0] == "k": #   king piece moved undo
+                    self.king_pos[last_move.piece_moved] = (last_move.start_row, last_move.start_col) # update tuple by undoing move
+
             self.light_to_move = not self.light_to_move
 
-            print("undoing ->", last_move.get_chess_notation())
+            self.undo_text = "undoing -> {}".format(last_move.get_chess_notation()) # an undoing statement to be printed to show undo done
         else:
             print("All undone!")
 
 
     def get_valid_moves(self):
-        return self.get_possible_moves()
+        """
+            this function updates the get_possible_moves to valid chess valid_moves
+            it identifies if the king is in check and provides solution to avoid checkmate
+            it calls the get_possible_moves function and incheck function
 
+            input parameters:
+            none
+
+            return parameter(s):
+            moves
+        """
+        # passing in two varibles moves and turns because it returns 2
+        moves, turn = self.get_possible_moves()
+        # iterating the index of the moves from the last to 1st because we will
+        #be removing moves which will skip moves if iterated from 1st to last
+        for i in range(len(moves)-1,-1,-1):
+            #making a move to check if it will lead to the king being attacked
+            self.make_move(moves[i])
+            self.light_to_move = not  self.light_to_move # switching turn to opponent
+            if self.in_check():  # checking if opposition move attack king
+                moves.remove(moves[i]) # remove moves leading to king being attacked
+            self.light_to_move  = not self.light_to_move #switching back
+            self.undo_move() # undo the move done... because this are hidden testing moves
+
+        if len(moves) == 0 and self.in_check(): # checking if there are no posssible valid moves  and king incheck
+            self.check_mate = True # check mate
+        elif len(moves) == 0: # checking if there are no possible moves but king not incheck
+            self.stale_mate = True # stalemate
+        else:
+            self.check_mate = False
+            self.stale_mate = False
+
+        return moves, turn
 
     def get_possible_moves(self):
 
@@ -345,9 +448,49 @@ class Game_state():
                     self.move_piece[self.board[i][j][0]](i, j, moves)
 
         return moves, turn
+      
+      
+    def in_check(self):
+        """
+          uses the square_under_attack fuction to test the moves that will lead to king being attacked
+          checks for both light and dark pieces
+
+          input parameter(s):
+          None
+
+          return parameter(s):
+          Boolean
+
+        """
+        if self.light_to_move: # lights turn to move
+          # checks light king under attack in respact to its position
+          return self.square_under_attack(self.king_pos["kl"][0],self.king_pos["kl"][1])
+        else:
+          # checks light king under attack in respect to its position
+          return self.square_under_attack(self.king_pos["kd"][0],self.king_pos["kd"][1])
 
 
+    def square_under_attack(self, r,c):
+        """
+          uses the kings postion on the board to determine if its under attacked
 
+          input parameter(s):
+          r -----> row of the piece position (int)
+          c -----> column of the piece position (int)
+
+          return parameter(s):
+          Boolean
+        """
+        self.light_to_move = not self.light_to_move # switching turns to opponent to get the opponent moves
+        oppostion_moves, turn= self.get_possible_moves() # passing in two varibles moves and turns because it returns 2
+        self.light_to_move = not self.light_to_move # change back the turn to check if opposition move attack king
+        for move in oppostion_moves: # iterating through opposition moves
+          if (move.end_row == r) and (move.end_col == c): # checking to see if the move is same position as that of the king
+            return True # true if same position
+        return False # false if not same position as king
+
+
+ 
 class Move():
 
     # map ranks to rows
@@ -364,7 +507,7 @@ class Move():
     # map columns to files (revers of files to columns)
     cols_to_files = {col:file for file, col in files_to_cols.items()}
 
-    def __init__(self, start_sq, end_sq, board):
+    def __init__(self, start_sq, end_sq, board, move_type="normal"):
         """
             A Move class abstracting all parameters needed
             for moving chess pieces on the board
@@ -380,6 +523,7 @@ class Move():
         self.end_col = end_sq[1] # intended column destiantion of piece to e moved
         self.piece_moved = board[self.start_row][self.start_col] # actual piece moved
         self.piece_captured = board[self.end_row][self.end_col] # opponent piece if any on the destination square
+        self.move_type = move_type # variable to store move type
 
     def get_chess_notation(self):
         """
@@ -417,7 +561,8 @@ class Move():
 
         if isinstance(other, Move): # if first (self) and second (other) parameters are both Move objects
             return self.start_row == other.start_row and self.start_col == other.start_col and \
-                    self.end_row == other.end_row and self.end_col == other.end_col
+                    self.end_row == other.end_row and self.end_col == other.end_col and \
+                    self.move_type == other.move_type
         else:
             return False
 
