@@ -3,6 +3,7 @@
 
 import pygame as pg
 from engine import Game_state, Move
+from tkinter import messagebox as mbox
 
 pg.init()
 
@@ -23,7 +24,7 @@ def load_images():
 	"""
 
 	pieces = ["bd", "bl", "kd", "kl", "nd", "nl", "pd", "pl", "qd", "ql", "rd", "rl"]
-	
+
 	for piece in pieces:
 		IMAGES[piece] = pg.transform.scale(pg.image.load("images/"+ piece + ".png"), (SQ_SIZE - OFFSET, SQ_SIZE - OFFSET))
 
@@ -44,7 +45,8 @@ def main():
 	valid_moves = [] 
 	while running:
 
-		valid_moves, first_click_turn = gs.get_valid_moves()		
+		valid_moves = gs.get_valid_moves(Move)		
+		first_click_turn = "l" if gs.light_to_move else "d"
 
 		for e in pg.event.get():
 			if e.type == pg.QUIT:
@@ -52,7 +54,8 @@ def main():
 
 			elif e.type == pg.KEYDOWN:
 				if e.key == pg.K_u: # u key pressed (undo last move)
-					gs.undo_move()
+					n = True
+					gs.undo_move(n)
 
 				elif e.key == pg.K_r: # r key pressed (reset game)
 					gs = Game_state()
@@ -99,7 +102,13 @@ def main():
 							else:
 								player_clicks = []
 								square_selected = ()
-
+		if gs.is_check_mate: # if one player wins
+			if gs.light_to_move:
+				mbox.showinfo("CHECKMATE", "LIGHT TEAM WINS")
+			else:
+				mbox.showinfo("CHECKMATE", "DARK TEAM WINS")
+		if gs.is_stalemate: #if drawn
+			mbox.showinfo("STALEMATE", "IT IS A STALEMATE")
 		display_game_state(screen, gs, valid_moves, player_clicks)
 		clock.tick(MAX_FPS)
 		pg.display.flip()
